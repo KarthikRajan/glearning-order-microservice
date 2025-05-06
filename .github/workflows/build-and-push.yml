@@ -1,4 +1,40 @@
+
 on:
-   push:
-     branches:
-       - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Optional manual trigger from GitHub UI
+
+permissions:
+  id-token: write     # Required for OIDC auth
+  contents: read      # Required for actions/checkout
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::526019347117:role/OIDCtrust
+          aws-region: us-west-2
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 526019347117.dkr.ecr.us-west-2.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build -t glearning-order-microservice .
+
+      - name: Tag Docker image
+        run: |
+          docker tag glearning-order-microservice:latest 526019347117.dkr.ecr.us-west-2.amazonaws.com/glearning-order-microservice:latest
+
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push 526019347117.dkr.ecr.us-west-2.amazonaws.com/glearning-order-microservice:latest
