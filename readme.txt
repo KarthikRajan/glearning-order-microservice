@@ -8,7 +8,7 @@
    - Stage 2: Copies the JAR into a minimal Amazon Corretto base image.
 4. **Tag & Push to Amazon ECR**.
 
----88
+---88--
  IAM Role Setup for GitHub Actions (OIDC)
 
 To allow GitHub Actions to push images to ECR securely, we created a custom IAM Role.
