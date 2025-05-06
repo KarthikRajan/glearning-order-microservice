@@ -3,39 +3,45 @@ name: Build and Push to ECR
 on:
   push:
     branches:
-      - main  # ✅ Triggers only when changes are pushed to the main branch
+      - main  # Trigger only on push to the main branch
 
 permissions:
-  id-token: write     # ✅ Required for OIDC authentication
-  contents: read      # ✅ Required to checkout repo content
+  id-token: write    # Permissions for OIDC authentication
+  contents: read     # Permissions to checkout code
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest   # The type of runner to use
 
     steps:
-      - name: Checkout source code
+      # Checkout the repository code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials using OIDC
+      # Configure AWS credentials using GitHub OIDC
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::526019347117:role/OIDCtrust
           aws-region: us-west-2
 
+      # Login to ECR
       - name: Log in to Amazon ECR
         run: |
           aws ecr get-login-password --region us-west-2 | \
           docker login --username AWS --password-stdin 526019347117.dkr.ecr.us-west-2.amazonaws.com
 
+      # Build Docker image using the Dockerfile
       - name: Build Docker image
         run: |
           docker build -t glearning-order-microservice .
 
+      # Tag the image with ECR repository URI
       - name: Tag Docker image
         run: |
           docker tag glearning-order-microservice:latest 526019347117.dkr.ecr.us-west-2.amazonaws.com/glearning-order-microservice:latest
 
-      - name: Push image to Amazon ECR
+      # Push the Docker image to ECR
+      - name: Push Docker image to ECR
         run: |
           docker push 526019347117.dkr.ecr.us-west-2.amazonaws.com/glearning-order-microservice:latest
